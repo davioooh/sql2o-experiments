@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
 @TestInstance(PER_CLASS)
@@ -37,9 +37,52 @@ class PersonDaoTest {
 
     @Test
     void shouldReturnMario() {
-        Person mario = personDao.findById(1);
-        assertNotNull(mario);
-        assertEquals("Mario", mario.getName());
-        assertEquals(40, mario.getAge());
+        Optional<Person> mario = personDao.findById(1);
+        assertTrue(mario.isPresent());
+        mario.ifPresent(p -> {
+            assertEquals("Mario", p.getName());
+            assertEquals(40, p.getAge());
+        });
+
+    }
+
+    @Test
+    void shouldReturnOptionalEmpty() {
+        Optional<Person> empty = personDao.findById(10);
+        assertFalse(empty.isPresent());
+    }
+
+    @Test
+    void shouldCount5Persons() {
+        int count = personDao.countAll();
+        assertEquals(5, count);
+    }
+
+    Person newPerson() {
+        Person p = new Person();
+        p.setName("Diego");
+        p.setAge(15);
+        return p;
+    }
+
+    @Test
+    void shouldInsertDiego() {
+        Person person = personDao.insert(newPerson());
+        assertTrue(person.getId() > 0);
+        assertEquals("Diego", person.getName());
+        assertEquals(15, person.getAge());
+    }
+
+    @Test
+    void shouldUpdateClaudia() {
+        Optional<Person> person = personDao.findById(5);
+        person.ifPresent(p -> {
+            assertEquals("Claudia", p.getName());
+            assertEquals(60, p.getAge());
+
+            p.setAge(50);
+            Person updated = personDao.update(p);
+            assertEquals(50, updated.getAge());
+        });
     }
 }
