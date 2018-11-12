@@ -1,0 +1,1 @@
+create table persons (id int primary key, name varchar, age int)
