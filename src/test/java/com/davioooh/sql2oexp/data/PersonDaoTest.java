@@ -75,14 +75,22 @@ class PersonDaoTest {
 
     @Test
     void shouldUpdateClaudia() {
-        Optional<Person> person = personDao.findById(5);
-        person.ifPresent(p -> {
-            assertEquals("Claudia", p.getName());
-            assertEquals(60, p.getAge());
+        Person p = personDao.findById(5)
+                .orElseThrow(() -> new IllegalStateException("Claudia non trovata..."));
 
-            p.setAge(50);
-            Person updated = personDao.update(p);
-            assertEquals(50, updated.getAge());
-        });
+        assertEquals("Claudia", p.getName());
+        assertEquals(60, p.getAge());
+
+        p.setAge(50);
+        Person updated = personDao.update(p);
+        assertEquals(50, updated.getAge());
+    }
+
+    @Test
+    void shouldThrowExceptionOnUpdate() {
+        Person noOne = new Person();
+        noOne.setId(100);
+
+        assertThrows(IllegalArgumentException.class, () -> personDao.update(noOne));
     }
 }
