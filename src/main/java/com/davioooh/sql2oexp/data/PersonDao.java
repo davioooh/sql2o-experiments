@@ -25,9 +25,11 @@ public class PersonDao {
     public Optional<Person> findById(int id) {
         String sql = "select * from persons where id = :id";
         try (Connection con = sql2o.open()) {
-            return Optional.ofNullable(con.createQuery(sql)
-                    .addParameter("id", id)
-                    .executeAndFetchFirst(Person.class));
+            return Optional.ofNullable(
+                    con.createQuery(sql)
+                            .addParameter("id", id)
+                            .executeAndFetchFirst(Person.class)
+            );
         }
     }
 
@@ -56,28 +58,23 @@ public class PersonDao {
         }
     }
 
-
     public Person update(Person person) {
         String insertSql =
-                "update persons set name = :name, age = :age " +
-                        "where id = :id";
-        String sql = "select * from persons where id = :id";
+                "update persons set name = :name, age = :age where id = :id";
+        String selectSql = "select * from persons where id = :id";
         try (Connection con = sql2o.open()) {
-            Person toUpdate = con.createQuery(sql)
-                    .addParameter("id", person.getId())
-                    .executeAndFetchFirst(Person.class);
-            if (toUpdate == null) {
-                throw new IllegalArgumentException("Cannot find person with ID: " + person.getId());
-            }
-            con.createQuery(insertSql)
+            int result = con.createQuery(insertSql)
                     .addParameter("name", person.getName())
                     .addParameter("age", person.getAge())
                     .addParameter("id", person.getId())
-                    .executeUpdate();
-            return con.createQuery(sql)
+                    .executeUpdate()
+                    .getResult();
+            if (result < 1) {
+                throw new IllegalArgumentException("Cannot update person: " + person);
+            }
+            return con.createQuery(selectSql)
                     .addParameter("id", person.getId())
                     .executeAndFetchFirst(Person.class);
         }
     }
-
 }
