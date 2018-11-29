@@ -42,26 +42,36 @@ public class PersonDao {
     }
 
     public Person insert(Person person) {
-        String insertSql =
-                "insert into persons (name, age) " +
-                        "values (:name, :age)";
-        String sql = "select * from persons where id = :id";
+        String insertSql = "insert into persons (name, age) values (:name, :age)";
         try (Connection con = sql2o.open()) {
             int key = con.createQuery(insertSql)
                     .addParameter("name", person.getName())
                     .addParameter("age", person.getAge())
                     .executeUpdate()
                     .getKey(Integer.class);
-            return con.createQuery(sql)
-                    .addParameter("id", key)
-                    .executeAndFetchFirst(Person.class);
+            person.setId(key);
+            return person;
         }
     }
 
+    public List<Person> insertAll(List<Person> persons) {
+        String insertSql = "insert into persons (name, age) values (:name, :age)";
+        try (Connection con = sql2o.beginTransaction()) {
+            persons.forEach(p -> {
+                int key = con.createQuery(insertSql)
+                        .addParameter("name", p.getName())
+                        .addParameter("age", p.getAge())
+                        .executeUpdate()
+                        .getKey(Integer.class);
+                p.setId(key);
+            });
+            con.commit();
+        }
+        return persons;
+    }
+
     public Person update(Person person) {
-        String insertSql =
-                "update persons set name = :name, age = :age where id = :id";
-        String selectSql = "select * from persons where id = :id";
+        String insertSql = "update persons set name = :name, age = :age where id = :id";
         try (Connection con = sql2o.open()) {
             int result = con.createQuery(insertSql)
                     .addParameter("name", person.getName())
@@ -72,9 +82,7 @@ public class PersonDao {
             if (result < 1) {
                 throw new IllegalArgumentException("Cannot update person: " + person);
             }
-            return con.createQuery(selectSql)
-                    .addParameter("id", person.getId())
-                    .executeAndFetchFirst(Person.class);
+            return person;
         }
     }
 }
